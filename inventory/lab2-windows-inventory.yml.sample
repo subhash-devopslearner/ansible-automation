@@ -1,0 +1,12 @@
+lab2_windows_hosts: # This is a sample inventory file for Windows hosts in lab1
+  hosts:
+    host-1:
+      ansible_host: host1.local # Replace with actual hostnames or IP addresses
+    
+  vars:
+    ansible_user: "windows-username-on-host-machine" # Replace with actual username
+    ansible_password: "windows-username-password" # Replace with actual password
+    ansible_port: "5986"
+    ansible_connection: "winrm"
+    ansible_winrm_transport: "basic"
+    ansible_winrm_server_cert_validation: ignore

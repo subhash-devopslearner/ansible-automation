@@ -205,3 +205,5 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+inventory/lab1-windows-inventory.yml
+inventory/lab2-windows-inventory.yml
