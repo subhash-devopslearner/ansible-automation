@@ -1,0 +1,8 @@
+# This is a sample inventory file for Linux hosts in lab2
+lab2_linux_hosts:
+  hosts:
+    host-1:
+      ansible_host: host1.local    # Replace with actual hostnames or IP addresses
+
+  vars:
+    ansible_user: remote-username-with-ssh-key-authentication-enabled   # Default user for SSH connections
