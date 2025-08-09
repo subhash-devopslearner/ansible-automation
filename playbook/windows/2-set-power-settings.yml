@@ -2,6 +2,7 @@
 - name: Configure Windows Power Settings
   hosts: all
   gather_facts: no
+  
   vars:
     monitor_timeout: 30         # Timeout in minutes
     brightness_level: 100       # Brightness level 

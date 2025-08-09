@@ -1,0 +1,56 @@
+# Playbook to enable or disable Bluetooth and Wifi network adapter on Windows 11 systems
+- name: Enable or disable Wi-Fi and Bluetooth via Device Manager with correct status
+  hosts: all
+  gather_facts: no
+  vars:
+    wifi_enabled: false                                    # true = enable, false = disable
+    bluetooth_enabled: false                               # true = enable, false = disable
+    wifi_pattern: "Intel(R) Wi-Fi"                         # As per your system (in device manager)
+    bluetooth_pattern: "Intel(R) Wireless Bluetooth(R)"    # As per your system (in device manager)
+
+  tasks:
+    - name: Set Wi-Fi state
+      ansible.windows.win_shell: |
+        $state = "{{ 'enable' if wifi_enabled else 'disable' }}"
+        $devices = Get-PnpDevice | Where-Object { $_.FriendlyName -like "*{{ wifi_pattern }}*" -and $_.Status -ne "Unknown" }
+        foreach ($device in $devices) {
+            if ($state -eq "disable") {
+                Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false
+            } else {
+                Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false
+            }
+        }
+        $devices = Get-PnpDevice | Where-Object { $_.FriendlyName -like "*{{ wifi_pattern }}*" -and $_.Status -ne "Unknown" }
+        $devices | ForEach-Object {
+            [PSCustomObject]@{
+                FriendlyName = $_.FriendlyName
+                State = if ($_.Status -eq "OK") { "Enabled" } else { "Disabled" }
+            }
+        } | ConvertTo-Json -Compress
+      register: wifi_result
+
+    - name: Set Bluetooth state
+      ansible.windows.win_shell: |
+        $state = "{{ 'enable' if bluetooth_enabled else 'disable' }}"
+        $devices = Get-PnpDevice | Where-Object { $_.FriendlyName -like "*{{ bluetooth_pattern }}*" -and $_.Status -ne "Unknown" }
+        foreach ($device in $devices) {
+            if ($state -eq "disable") {
+                Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false
+            } else {
+                Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false
+            }
+        }
+        $devices = Get-PnpDevice | Where-Object { $_.FriendlyName -like "*{{ bluetooth_pattern }}*" -and $_.Status -ne "Unknown" }
+        $devices | ForEach-Object {
+            [PSCustomObject]@{
+                FriendlyName = $_.FriendlyName
+                State = if ($_.Status -eq "OK") { "Enabled" } else { "Disabled" }
+            }
+        } | ConvertTo-Json -Compress
+      register: bt_result
+
+    - name: Show summary
+      ansible.builtin.debug:
+        msg:
+          - "Wi-Fi devices processed: {{ wifi_result.stdout }}"
+          - "Bluetooth devices processed: {{ bt_result.stdout }}"

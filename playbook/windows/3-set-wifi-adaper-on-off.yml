@@ -1,0 +1,19 @@
+# Playbook to enable or disable Wifi network adapter on Windows 11 systems
+- name: Manage Wi-Fi adapter state
+  hosts: all
+  gather_facts: no
+
+  vars:
+    wifi_enabled: false              # true = enable, false = disable
+    wifi_adapter_name: "Wi-Fi"
+
+  tasks:
+    - name: Set Wi-Fi adapter state
+      ansible.windows.win_command:
+        cmd: netsh interface set interface "{{ wifi_adapter_name }}" {{ 'enable' if wifi_enabled else 'disable' }}
+
+    - name: Show summary
+      ansible.builtin.debug:
+        msg: >
+          Wi-Fi adapter "{{ wifi_adapter_name }}" has been
+          {{ 'ENABLED' if wifi_enabled else 'DISABLED' }}.
