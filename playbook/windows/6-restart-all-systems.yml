@@ -1,0 +1,15 @@
+# Playbook to shutdown or restart Windows 11 systems
+- name: Reboot Windows hosts with optional message
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+  
+  vars:
+    system_action: "r"             # s=shutdown" or "r=reboot"
+    action_time: 0                 # seconds until action (0 = immediate)
+    action_message: ""             # Optional message
+    execute_action: true           # Set true to run the command
+
+  tasks:  
+    - name: Reboot systems in given time
+      ansible.windows.win_command:
+        cmd: shutdown -{{ system_action }} -t {{ action_time }}    

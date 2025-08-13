@@ -1,6 +1,6 @@
 # Playbook to shutdown or restart Windows 11 systems
 - name: Shutdown or reboot Windows hosts with optional message
-  hosts: all
+  hosts: "{{ target_host | default('all') }}"
   gather_facts: no
   
   vars:
