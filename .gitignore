@@ -214,3 +214,5 @@ inventory/lab2-linux-inventory.yml
 
 # Ignore all contents of src folder
 src/*
+# Except this file
+!src/.gitkeep
