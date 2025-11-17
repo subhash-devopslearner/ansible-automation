@@ -1,0 +1,32 @@
+- name: Sync time on all Windows systems
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+
+  tasks:
+
+    - name: Force Windows to resync time with NTP server
+      ansible.windows.win_shell: |
+        w32tm /resync /force
+      register: time_sync_output
+      ignore_errors: yes
+
+    - name: Show output of time sync command
+      debug:
+        var: time_sync_output.stdout
+
+    - name: Query current time configuration
+      ansible.windows.win_shell: |
+        w32tm /query /status
+      register: time_status
+
+    # - name: Display time status
+    #   debug:
+    #     var: time_status.stdout
+
+    - name: Extract Successful Sync Time
+      set_fact:
+        successful_sync_time: "{{ time_status.stdout | regex_search('Successful Sync Time:\\s*(.*)', '\\1') }}"
+
+    - name: Show only Successful Sync Time
+      debug:
+        msg: "Successful Sync Time: {{ successful_sync_time }}"

@@ -1,0 +1,66 @@
+- name: Collect student files created today
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+
+  vars:
+    username: "student"             # Change this to the username you want
+    extensions: 'pdf,doc,docx,xls,xlsx,ppt,pptx'
+    local_save_dir: "{{ destination_path | default('/home/subhash/Desktop/remote-files') }}"
+
+  tasks:
+
+    - name: Get today's date (control node)
+      ansible.builtin.set_fact:
+        today_date: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Get user profile path on remote host
+      win_shell: |
+        $user = "{{ username }}"
+        (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\*").ProfileImagePath |
+        Where-Object { $_ -like "*\$user" }
+      register: user_profile_raw
+
+    - name: Set user_profile fact
+      set_fact:
+        user_profile: "{{ user_profile_raw.stdout | trim }}"
+
+    - name: Define target paths dynamically
+      set_fact:
+        target_paths:
+          - "{{ user_profile }}\\Desktop"
+          - "{{ user_profile }}\\Downloads"
+          - "{{ user_profile }}\\Documents"
+
+    - name: Get files by date and extension from each path
+      win_shell: |
+        $today = Get-Date "{{ today_date }}"
+        Get-ChildItem -Path "{{ item }}" -Recurse -Include *.{{ extensions | replace(',', ',*.') }} -ErrorAction SilentlyContinue |
+        Where-Object { $_.CreationTime.Date -eq $today.Date } |
+        Select-Object -ExpandProperty FullName
+      loop: "{{ target_paths }}"
+      register: matched_files
+
+    - name: Flatten list of all matched files
+      set_fact:
+        all_matched_files: "{{ matched_files.results | map(attribute='stdout_lines') | list | flatten }}"
+
+    - name: Ensure destination directory exists on control node
+      ansible.builtin.file:
+        path: "{{ local_save_dir }}/{{ inventory_hostname }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Show matched files
+      debug:
+        var: all_matched_files
+
+    - name: Fetch files to control node
+      ansible.builtin.fetch:
+        src: "{{ item }}"
+        dest: "{{ local_save_dir }}/{{ inventory_hostname }}/"
+        flat: yes
+      loop: "{{ all_matched_files }}"
+      when: item is defined and item != ''

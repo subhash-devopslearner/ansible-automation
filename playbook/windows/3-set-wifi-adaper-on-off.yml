@@ -1,6 +1,6 @@
 # Playbook to enable or disable Wifi network adapter on Windows 11 systems
 - name: Manage Wi-Fi adapter state
-  hosts: all
+  hosts: "{{ target_host | default('all') }}"
   gather_facts: no
 
   vars:

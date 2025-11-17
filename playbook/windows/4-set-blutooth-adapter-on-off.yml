@@ -1,6 +1,6 @@
 # Playbook to enable or disable Bluetooth and Wifi network adapter on Windows 11 systems
 - name: Enable or disable Wi-Fi and Bluetooth via Device Manager with correct status
-  hosts: all
+  hosts: "{{ target_host | default('all') }}"
   gather_facts: no
   vars:
     wifi_enabled: false                                    # true = enable, false = disable

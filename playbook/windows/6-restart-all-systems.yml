@@ -12,4 +12,5 @@
   tasks:  
     - name: Reboot systems in given time
       ansible.windows.win_command:
-        cmd: shutdown -{{ system_action }} -t {{ action_time }}    
+        cmd: shutdown -{{ system_action }} -t {{ action_time }}  
+      when: execute_action  

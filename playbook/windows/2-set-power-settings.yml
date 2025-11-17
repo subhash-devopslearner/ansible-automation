@@ -1,6 +1,6 @@
 # Playbook to Set different power settings on Windows 11 systems
 - name: Configure Windows Power Settings
-  hosts: all
+  hosts: "{{ target_host | default('all') }}"
   gather_facts: no
   
   vars:

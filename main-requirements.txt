@@ -1,3 +1,0 @@
-# If you get problem installing packages on different version Linux system, then use this file
-ansible
-pywinrm

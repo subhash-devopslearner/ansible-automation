@@ -1,0 +1,45 @@
+---
+- name: Wake all systems using Wake-on-LAN
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    lab2_mac_list:
+      - "38-CA-84-4C-41-50"
+      - "38-CA-84-4C-1D-25"
+      - "38-CA-84-4C-1D-BD"
+      - "38-CA-84-4C-9C-4D"
+      - "38-CA-84-49-91-1B"
+      - "38-CA-84-4C-DC-E5"
+      - "38-CA-84-4C-EC-C2"
+      - "38-CA-84-4C-FC-EE"
+      - "38-CA-84-4C-31-94"
+      - "38-CA-84-4C-E0-63"
+      - "38-CA-84-4C-A8-33"
+      - "38-CA-84-4C-9C-C5"
+      - "38-CA-84-4C-58-1C"
+      - "38-CA-84-4C-8C-F1"
+      - "38-CA-84-4C-EB-01"
+      - "38-CA-84-4A-0D-48"
+      - "38-CA-84-4C-48-A0"
+      - "38-CA-84-4C-C0-D2"
+      - "38-CA-84-49-B4-54"
+      - "38-CA-84-4C-70-09"
+      - "38-CA-84-4C-F0-5D"
+      - "38-CA-84-4C-9C-B9"
+      - "38-CA-84-4C-EC-18"
+      - "38-CA-84-49-A5-88"
+      - "38-CA-84-4C-DC-B4"
+      - "38-CA-84-4C-11-DF"
+      - "38-CA-84-4C-31-7C"
+      - "38-CA-84-4B-7E-3D"
+      - "38-CA-84-49-65-9C"
+      - "38-CA-84-4C-DC-3C"
+      - "38-CA-84-49-05-B6"
+      - "38-CA-84-4C-31-B2"
+
+  tasks:
+    - name: Send Wake-on-LAN magic packet to Lab2 systems
+      community.general.wakeonlan:
+        mac: "{{ item }}"
+      loop: "{{ lab2_mac_list }}"

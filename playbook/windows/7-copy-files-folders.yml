@@ -1,5 +1,6 @@
-# Playbook to copy files and folders to Windows hosts
-- name: Copy files and folders to Windows hosts
+---
+# Playbook to copy and delete folders on Windows hosts
+- name: Copy or Delete folders on Windows hosts
   hosts: "{{ target_host | default('all') }}"
   gather_facts: no
   vars:
@@ -11,3 +12,44 @@
       ansible.windows.win_copy:
         src: "{{ src_path }}"
         dest: "{{ dest_path }}"
+      tags: copy
+
+    - name: Wait for copy to complete
+      ansible.windows.win_wait_for:
+        path: "{{ dest_path }}"
+        state: present
+      tags: copy
+    
+    - name: Check if folder exists
+      ansible.windows.win_stat:
+        path: "{{ dest_path }}"
+      register: folder_status
+      tags: copy
+
+    - name: Confirm copy finished
+      debug:
+        msg: "Copy completed successfully to {{ dest_path }}"             
+      tags: copy
+
+    - name: Delete folder from Windows hosts
+      ansible.windows.win_file:
+        path: "{{ dest_path }}"
+        state: absent
+      tags: delete
+
+    - name: Wait for deletion to complete
+      ansible.windows.win_wait_for:
+        path: "{{ dest_path }}"
+        state: absent
+      tags: delete
+
+    - name: Check if folder still exists
+      ansible.windows.win_stat:
+        path: "{{ dest_path }}"
+      register: folder_status    
+      tags: delete
+    
+    - name: Confirm delete finished
+      debug:
+        msg: "Folder {{ dest_path }} deleted successfully."        
+      tags: delete

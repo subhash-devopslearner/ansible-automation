@@ -13,9 +13,7 @@
     - name: Shutdown systems in given time
       ansible.windows.win_command:
         cmd: shutdown -{{ system_action }} -t {{ action_time }}
+      when: execute_action
 
-    # - name: Perform shutdown or reboot
-    #   ansible.windows.win_command:
-    #     cmd: >-
-    #       shutdown{% if system_action == "reboot" %} /r{% else %} /s{% endif %} /t {{ action_time }}{% if action_time|int > 0 %} /f{% endif %}{% if action_message != "" %} /c "{{ action_message }}"{% endif %}
-    #   when: execute_action | bool
+# Running playbook with target_host variable 
+# ansible-playbook -i inventory/lab2-windows-inventory.yml playbook/windows/5-shutdown-all-systems.yml -e "target_host=pl1-22,pl1-29"
