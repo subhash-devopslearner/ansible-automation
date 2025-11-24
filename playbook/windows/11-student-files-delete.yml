@@ -1,0 +1,63 @@
+- name: All Windows plays
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+   
+  vars:
+    target_paths:
+      - 'C:\Users\student\Contacts'
+      - 'C:\Users\student\Desktop'
+      - 'C:\Users\student\Documents'
+      - 'C:\Users\student\Downloads'
+      - 'C:\Users\student\Favorites'
+      - 'C:\Users\student\Links'
+      - 'C:\Users\student\Music'
+      - 'C:\Users\student\Pictures'
+      - 'C:\Users\student\Saved Games'
+      - 'C:\Users\student\Searches'
+      - 'C:\Users\student\Videos'
+      - 'C:\Users\student\.vscode\extensions'
+      - 'C:\Users\student\OneDrive'      
+      
+      - 'D:\\'  # ⚠️ Optional, use with care                  
+      
+  tasks:
+
+    - name: Find files in each target path
+      win_find:
+        paths: "{{ current_path }}"
+        file_type: file
+      loop: "{{ target_paths }}"
+      loop_control:
+        loop_var: current_path
+      register: found_files
+
+    - name: Find folders in each target path
+      win_find:
+        paths: "{{ current_path }}"
+        file_type: directory
+      loop: "{{ target_paths }}"
+      loop_control:
+        loop_var: current_path
+      register: found_dirs
+
+    - name: Delete found files
+      win_file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ found_files.results | map(attribute='files') | flatten }}"
+      when: item.path is defined
+
+    - name: Delete found directories (deepest folders first)
+      win_file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ found_dirs.results | map(attribute='files') | flatten | sort(attribute='path', reverse=True) }}"
+      when: item.path is defined
+
+    - name: Clear D  Drive Recycle Bin contents
+      win_command: 'cmd.exe /c "rd /s /q D:\$Recycle.Bin"'
+
+    - name: Clear C  Drive Recycle Bin contents
+      win_command: 'cmd.exe /c "rd /s /q C:\$Recycle.Bin"'
+
+

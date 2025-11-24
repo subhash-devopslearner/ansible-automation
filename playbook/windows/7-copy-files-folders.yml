@@ -1,5 +1,7 @@
 ---
 # Playbook to copy and delete folders on Windows hosts
+# Don't forget to use tags
+# How to use: ansible-playbook -i inventory/lab1-windows-inventory.yml playbook/windows/7-copy-files-folders.yml  -e destination_path=C:\\Users\\student\\Desktop\\.gitkeep --tags=delete
 - name: Copy or Delete folders on Windows hosts
   hosts: "{{ target_host | default('all') }}"
   gather_facts: no

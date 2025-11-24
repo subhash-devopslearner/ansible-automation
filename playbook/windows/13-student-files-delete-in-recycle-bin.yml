@@ -1,0 +1,10 @@
+- name: Delete Recycle Bin contents on Windows systems
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false 
+
+  tasks:   
+    - name: Clear D  Drive Recycle Bin contents
+      win_command: 'cmd.exe /c "rd /s /q D:\$Recycle.Bin"'
+
+    - name: Clear C  Drive Recycle Bin contents
+      win_command: 'cmd.exe /c "rd /s /q C:\$Recycle.Bin"'

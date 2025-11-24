@@ -1,0 +1,118 @@
+---
+- name: Delete recently created files and folders from Windows user directories (with exclusions)
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+
+  vars:
+    # 🎯 Target folders to clean
+    target_paths:
+      - 'C:\Users\student\Contacts'
+      - 'C:\Users\student\Desktop'
+      - 'C:\Users\student\Documents'
+      - 'C:\Users\student\Downloads'
+      - 'C:\Users\student\Favorites'
+      - 'C:\Users\student\Links'
+      - 'C:\Users\student\Music'
+      - 'C:\Users\student\Pictures'
+      - 'C:\Users\student\Saved Games'
+      - 'C:\Users\student\Searches'
+      - 'C:\Users\student\Videos'
+      - 'C:\Users\student\.vscode\extensions'
+      - 'C:\Users\student\OneDrive'      
+      
+      - 'D:\\'  # ⚠️ Optional, use with care
+      - 'C:\\'  # ⚠️ Optional, use with care
+
+    # ❌ Paths to exclude from deletion (exact match only)
+    excluded_items:
+      - 'C:\Users\student\VirtualBox VM'
+      - 'C:\Users\student\.VirtualBox'
+      - 'C:\Users\student\Virtual Machines'
+      - 'C:\Users\student\ntuser'
+      - 'C:\Users\student\AppData'
+      - 'C:\Users\student\Oracle'
+
+      - 'C:\Users\student\.jupyter'
+      - 'C:\Users\student\.ipython'
+      - 'C:\Users\student\.ipynb_checkpoints'
+      - 'C:\Users\student\.ms-ad'
+      - 'C:\Users\student\node_modules'           
+
+      - 'C:\eclipse'
+      - 'C:\Intel'
+      - 'C:\inetpub'
+      - 'C:\MSOCache'
+      - 'C:\oracle'
+      - 'C:\.msdia80.dll'
+      - 'C:\.msvcr80.dll'
+      - 'C:\msys64'
+      - 'C:\oraclexe'
+      - 'C:\PerfLogs'
+      - 'C:\Program Files'
+      - 'C:\Program Files (x86)'
+      - 'C:\ProgramData'
+      - 'C:\$WINDOWS.~BT'
+      - 'C:\$WinREAgent'
+      - 'C:\$SysReset'
+      - 'C:\$Recycle.Bin'
+      - 'C:\DumpStack.log.tmp'
+      - 'C:\hiberfil.sys'
+      - 'C:\pagefile.sys'
+      - 'C:\swapfile.sys'
+      - 'C:\System Volume Information'
+      - 'C:\Users'
+      - 'C:\Windows'
+      - 'C:\xampp'
+      - 'C:\xampp.rar'           
+
+    # 🕒 Time window — delete files created within the last 1 hour
+    deletion_time_window: "-90d"  # e.g., "-1h" for 1 hour, "-1d" for 1 day, "-1w" for 1 week
+
+  tasks:
+
+    - name: Find recent files in each target path (created within time window)
+      win_find:
+        paths: "{{ current_path }}"
+        file_type: file
+        age: "{{ deletion_time_window }}"
+        age_stamp: ctime
+      loop: "{{ target_paths }}"
+      loop_control:
+        loop_var: current_path
+      register: found_files
+
+    - name: Find recent folders in each target path (created within time window)
+      win_find:
+        paths: "{{ current_path }}"
+        file_type: directory
+        age: "{{ deletion_time_window }}"
+        age_stamp: ctime
+      loop: "{{ target_paths }}"
+      loop_control:
+        loop_var: current_path
+      register: found_dirs
+
+    - name: Delete recent files (excluding protected paths)
+      win_file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: >-
+        {{
+          found_files.results
+          | map(attribute='files') | flatten
+          | rejectattr('path', 'in', excluded_items)
+        }}
+      when: item.path is defined
+
+    - name: Delete recent folders (excluding protected paths, deepest first)
+      win_file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: >-
+        {{
+          found_dirs.results
+          | map(attribute='files') | flatten
+          | rejectattr('path', 'in', excluded_items)
+          | sort(attribute='path', reverse=True)
+        }}
+      when: item.path is defined
