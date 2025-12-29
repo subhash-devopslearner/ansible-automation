@@ -1,0 +1,44 @@
+- name: Check if folder of file exist on systems
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+
+  vars:
+    folder_path: "{{ destination_path | default('C:\\eclipse') }}"
+        
+  tasks:   
+
+    - name: Check if folder exists
+      ansible.windows.win_stat:
+        path: "{{ folder_path }}"
+      register: folder_status
+
+    - name: Display result 
+      debug:
+        msg: "Folder {{ folder_path }} exist"
+      when: folder_status.stat.exists and folder_status.stat.isdir
+
+    
+
+    # - name: Run javac --version
+    #   ansible.windows.win_command: javac --version
+    #   register: javac_output
+    #   ignore_errors: yes
+
+    # - name: Get javac path
+    #   ansible.windows.win_command: where javac
+    #   register: javac_path
+    #   ignore_errors: yes
+
+    # - name: Display Java status if installed
+    #   debug:
+    #     msg:
+    #       - "Java Status : INSTALLED"
+    #       - "Java Version: {{ javac_output.stdout }}"
+    #       - "Java Path   : {{ javac_path.stdout_lines }}"
+    #   when: javac_output.rc == 0
+
+    # - name: Display Java status if NOT installed
+    #   debug:
+    #     msg: "Java Status : NOT INSTALLED"
+    #   when: javac_output.rc != 0
+      

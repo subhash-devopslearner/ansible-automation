@@ -1,0 +1,43 @@
+- name: Check installed software on Windows
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+
+  vars:
+    software_list:
+      - name: Java
+        command: "javac --version"
+        locator: "where javac"
+
+      - name: Python
+        command: "python --version"
+        locator: "where python"
+
+      - name: GCC
+        command: "gcc --version"
+        locator: "where gcc"   
+      
+
+  tasks:
+    - name: Run version command
+      ansible.windows.win_command: "{{ item.command }}"
+      register: version_results
+      loop: "{{ software_list }}"
+      ignore_errors: yes
+
+    - name: Find software path
+      ansible.windows.win_command: "{{ item.locator }}"
+      register: path_results
+      loop: "{{ software_list }}"
+      ignore_errors: yes
+
+    - name: Display software status (clean output)
+      debug:
+        msg: >-
+          {{ item.0.item.name }}
+          | {{ 'INSTALLED' if item.0.rc == 0 else 'NOT INSTALLED' }}
+          | {{ item.0.stdout_lines[0] if item.0.rc == 0 else 'N/A' }}
+          | {{ item.1.stdout_lines[0] if item.0.rc == 0 else 'N/A' }}
+      loop: "{{ version_results.results | zip(path_results.results) | list }}"
+      loop_control:
+        label: "{{ item.0.item.name }}"
+
