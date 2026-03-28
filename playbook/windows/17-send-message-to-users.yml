@@ -1,11 +1,19 @@
 - name: Send message to users on Windows machines
   hosts: "{{ target_host | default('all') }}"
   gather_facts: no
+
+  vars_prompt:
+    - name: custom_msg
+      prompt: "Enter the message to send (leave blank for default)"
+      private: false
+      default: "Attention: Please do your lab work. Don't play games and don't engage in uneducational activities. Focus on learning and practicing your skills. This is important for your success in the course."
       
 
   tasks:
     - name: Send message to users
       community.windows.win_msg:
+        to: "student"
         display_seconds: 60
-        msg: "Attention: Please do your lab work. Don't play games and don't engage in uneducational activities. Focus on learning and practicing your skills. This is important for your success in the course."
         title: "Pay attention"
+        msg: "{{ custom_msg | default }}"
+        
