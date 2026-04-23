@@ -6,7 +6,7 @@ import os
 # --- PATH CONFIGURATION ---
 BASE_DIR = os.path.expanduser("~/ansible-automation")
 PLAYBOOK = os.path.join(BASE_DIR, "playbook/windows/17-send-message-to-users.yml")
-INVENTORY = os.path.join(BASE_DIR, "inventory/lab1-windows-inventory.yml")
+INVENTORY = os.path.join(BASE_DIR, "inventory/lab2-windows-inventory.yml")
 ANSIBLE_BIN = os.path.join(BASE_DIR, "venv", "bin", "ansible-playbook")
 
 DEFAULT_MSG = "*** LAB ALERT ***\nPlease focus on your lab work. No games or non-educational activities.\n\nThank you."

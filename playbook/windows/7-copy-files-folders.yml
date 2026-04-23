@@ -33,25 +33,25 @@
         msg: "Copy completed successfully to {{ dest_path }}"             
       tags: copy
 
-    - name: Delete folder from Windows hosts
-      ansible.windows.win_file:
-        path: "{{ dest_path }}"
-        state: absent
-      tags: delete
+    # - name: Delete folder from Windows hosts
+    #   ansible.windows.win_file:
+    #     path: "{{ dest_path }}"
+    #     state: absent
+    #   tags: delete
 
-    - name: Wait for deletion to complete
-      ansible.windows.win_wait_for:
-        path: "{{ dest_path }}"
-        state: absent
-      tags: delete
+    # - name: Wait for deletion to complete
+    #   ansible.windows.win_wait_for:
+    #     path: "{{ dest_path }}"
+    #     state: absent
+    #   tags: delete
 
-    - name: Check if folder still exists
-      ansible.windows.win_stat:
-        path: "{{ dest_path }}"
-      register: folder_status    
-      tags: delete
+    # - name: Check if folder still exists
+    #   ansible.windows.win_stat:
+    #     path: "{{ dest_path }}"
+    #   register: folder_status    
+    #   tags: delete
     
-    - name: Confirm delete finished
-      debug:
-        msg: "Folder {{ dest_path }} deleted successfully."        
-      tags: delete
+    # - name: Confirm delete finished
+    #   debug:
+    #     msg: "Folder {{ dest_path }} deleted successfully."        
+    #   tags: delete

@@ -1,0 +1,12 @@
+---
+- name: Disable Windows Firewall on Windows 11
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+  tasks:
+    - name: Disable firewall for all profiles (Domain, Private, and Public)
+      ansible.windows.win_firewall:
+        state: disabled
+        profiles:
+          - Domain
+          - Private
+          - Public
