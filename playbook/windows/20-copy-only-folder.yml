@@ -1,0 +1,16 @@
+---
+# Playbook to copy files on Windows hosts
+- name: Copy only files to Windows hosts 
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+  vars:
+    src_path: "{{ source_path | default('/home/subhash/ansible-automation/src/folder_to_copy/') }}"
+    dest_path: "{{ destination_path | default('C:\\Users\\student') }}"
+
+  tasks:
+    - name: Copy folder to Windows hosts
+      ansible.windows.win_copy:
+        src: "{{ src_path }}"
+        dest: "{{ dest_path }}"      
+
+    
