@@ -37,6 +37,7 @@
       - "38-CA-84-4C-DC-3C"
       - "38-CA-84-49-05-B6"
       - "38-CA-84-4C-31-B2"
+      - "38-CA-84-4A-DF-02"
 
   tasks:
     - name: Send Wake-on-LAN magic packet to Lab2 systems
