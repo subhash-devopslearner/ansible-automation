@@ -1,0 +1,31 @@
+---
+- name: Install StarUML v7.1.0 on Windows 11
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+  vars:
+    installer_path: "D:\\SW-Dumps\\StarUML Setup 7.1.0.exe"
+    product_registry_name: "StarUML"
+
+  tasks:
+    - name: Verify that the local installer file exists on the host
+      ansible.windows.win_stat:
+        path: "{{ installer_path }}"
+      register: file_info
+
+    - name: Fail if the installer executable is missing
+      ansible.builtin.fail:
+        msg: "The installer was not found at {{ installer_path }}. Please copy it to the directory before running."
+      when: not file_info.stat.exists
+
+    - name: Install StarUML Silently
+      ansible.windows.win_package:
+        path: "{{ installer_path }}"
+        product_id: "{{ product_registry_name }}"
+        arguments:
+          - /S
+        state: present
+      register: install_result
+
+    - name: Output Installation Results
+      ansible.builtin.debug:
+        msg: "StarUML Installation result status: {{ install_result }}"

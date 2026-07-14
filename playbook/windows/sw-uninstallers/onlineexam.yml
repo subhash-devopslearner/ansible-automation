@@ -1,0 +1,37 @@
+---
+- name: Uninstall software using product ID from Windows 11
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+
+# Get the registry path for the software to ensure idempotency
+# $RegPaths = @(
+#    "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
+#    "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*",
+#    "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*"
+#)
+
+# Get product id for the software to be uninstalled
+# Run the following PowerShell command to get the product ID for the software you want to uninstall
+# Replace "*exam*" with a unique part of the software's name
+# The product ID is usually a GUID in the format {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
+# Remember to run this command in an elevated PowerShell session (Run as Administrator)
+# Replace the product ID in the ansible.windows.win_package task below to uninstall the software
+
+# Get-ItemProperty -Path $RegPaths -ErrorAction SilentlyContinue | 
+#     Where-Object { $_.DisplayName -like "*exam*" } | 
+#     Select-Object DisplayName, DisplayVersion, UninstallString | 
+#     Format-Table -AutoSize
+
+  tasks:
+    - name: Remove Software Silently
+      ansible.windows.win_package:
+        product_id: "{531D79DC-5D06-4DE3-81B4-7BCA26631366}"
+        state: absent
+        arguments:
+          - /qn
+          - /norestart
+      register: uninstall_result
+
+    - name: Output Uninstallation Status
+      ansible.builtin.debug:
+        msg: "Uninstallation Result: {{ uninstall_result.message | default('Software removed or not present') }}"

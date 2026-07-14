@@ -1,0 +1,35 @@
+---
+- name: Install R-4.6.1 on Windows 11
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+  vars:
+    r_installer_path: "D:\\SW-Dumps\\R-4.6.1-win.exe"
+    # Registry path for R 4.6.1 to ensure playbook idempotency
+    r_registry_id: "R for Windows 4.6.1_is1"
+
+  tasks:
+    - name: Verify that the R installer file exists on the host
+      ansible.windows.win_stat:
+        path: "{{ r_installer_path }}"
+      register: r_file_info
+
+    - name: Fail if the R installer executable is missing
+      ansible.builtin.fail:
+        msg: "The R installer was not found at {{ r_installer_path }}."
+      when: not r_file_info.stat.exists
+
+    - name: Install R Silently
+      ansible.windows.win_package:
+        path: "{{ r_installer_path }}"
+        product_id: "{{ r_registry_id }}"
+        arguments:
+          - /SP-
+          - /VERYSILENT
+          - /SUPPRESSMSGBOXES
+          - /NORESTART
+        state: present
+      register: r_install_result
+
+    - name: Output R Installation Results
+      ansible.builtin.debug:
+        msg: "R Installation status: {{ r_install_result }}"

@@ -1,0 +1,32 @@
+---
+- name: Install RStudio 2026.06.0 on Windows 11
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: no
+  vars:
+    rstudio_installer_path: "D:\\SW-Dumps\\RStudio-2026.06.0-242.exe"
+    # Registry Hook for RStudio to ensure idempotency
+    rstudio_product_id: "RStudio"
+
+  tasks:
+    - name: Verify that the RStudio installer file exists on the host
+      ansible.windows.win_stat:
+        path: "{{ rstudio_installer_path }}"
+      register: rstudio_file_info
+
+    - name: Fail if the RStudio installer executable is missing
+      ansible.builtin.fail:
+        msg: "The RStudio installer was not found at {{ rstudio_installer_path }}."
+      when: not rstudio_file_info.stat.exists
+
+    - name: Install RStudio Silently
+      ansible.windows.win_package:
+        path: "{{ rstudio_installer_path }}"
+        product_id: "{{ rstudio_product_id }}"
+        arguments:
+          - /S
+        state: present
+      register: rstudio_install_result
+
+    - name: Output RStudio Installation Results
+      ansible.builtin.debug:
+        msg: "RStudio Installation status: {{ rstudio_install_result }}"
