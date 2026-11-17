@@ -3,8 +3,8 @@
   hosts: "{{ target_host | default('all') }}"
   gather_facts: no
   vars:
-    wifi_enabled: true                                     # true = enable, false = disable
-    bluetooth_enabled: true                                # true = enable, false = disable
+    wifi_enabled: false                                     # true = enable, false = disable
+    bluetooth_enabled: false                                # true = enable, false = disable
     wifi_pattern: "Intel(R) Wi-Fi"                         # As per your system (in device manager)
     bluetooth_pattern: "Intel(R) Wireless Bluetooth(R)"    # As per your system (in device manager)
 

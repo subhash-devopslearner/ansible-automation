@@ -5,7 +5,7 @@
 # How to use: ansible-playbook -i inventory/lab1-windows-inventory.yml playbook/windows/7-copy-files-folders.yml -e destination_path=C:\\Users\\student\\Desktop\\.gitkeep --tags=delete
 # How to use: ansible-playbook -i inventory/lab1-windows-inventory.yml playbook/windows/7-copy-files-folders.yml -e "source_path='/home/subhash/Desktop/SmartBoard Share.url'" -e "destination_path='C:\Users\Public\Desktop\SmartBoard Share.url'" -e "target_host=all"
 # How to use: ansible-playbook -i inventory/lab1-windows-inventory.yml playbook/windows/7-copy-files-folders.yml -e "source_path='/home/subhash/Documents/ctps'" -e "destination_path='C:\Users\Public\Desktop'" -e "target_host=all"
-
+# How to delete files using ansible adhoc command : ansible cc1_windows_hosts -i inventory/lab1-windows-inventory.yml -m ansible.windows.win_file -a "path='C:/Users/Public/Desktop/ctps' state=absent"
 - name: Copy or Delete folders on Windows hosts
   hosts: "{{ target_host | default('all') }}"
   gather_facts: no
