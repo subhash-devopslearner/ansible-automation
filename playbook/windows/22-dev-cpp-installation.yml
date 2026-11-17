@@ -1,0 +1,53 @@
+---
+- name: Install Dev-C++ 5.11 Offline on Windows 11
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+  vars:
+    installer_name: "Dev-Cpp-511-Setup.exe"
+    remote_temp_dir: 'D:\SW-Dumps'
+    install_dir: 'C:\Program Files (x86)\Dev-Cpp'
+
+  tasks:
+    - name: Check if Dev-C++ is already installed
+      ansible.windows.win_stat:
+        path: '{{ install_dir }}\devcpp.exe'
+      register: devcpp_installed
+
+    - name: Copy and install Dev-C++ 5.11 offline
+      when: not devcpp_installed.stat.exists
+      block:
+        - name: Ensure temporary directory exists on target host
+          ansible.windows.win_file:
+            path: '{{ remote_temp_dir }}'
+            state: directory
+
+        - name: Copy Dev-C++ installer from control node to target host
+          ansible.windows.win_copy:
+            src: "/home/subhash/ansible-automation/src/{{ installer_name }}"
+            dest: '{{ remote_temp_dir }}\{{ installer_name }}'
+
+        - name: Run silent installation of Dev-C++ 5.11
+          ansible.windows.win_package:
+            path: '{{ remote_temp_dir }}\{{ installer_name }}'
+            arguments: /S
+            creates_path: '{{ install_dir }}\devcpp.exe'
+            state: present
+
+      always:
+        - name: Remove temporary installer file to free disk space
+          ansible.windows.win_file:
+            #path: '{{ remote_temp_dir }}\{{ installer_name }}'
+            path: '{{ remote_temp_dir }}'
+            state: absent
+
+    - name: Verify Dev-C++ installation succeeded
+      ansible.windows.win_stat:
+        path: '{{ install_dir }}\devcpp.exe'
+      register: verify_devcpp
+
+    - name: Assert installation check
+      ansible.builtin.assert:
+        that:
+          - verify_devcpp.stat.exists
+        fail_msg: "Dev-C++ 5.11 failed to install at {{ install_dir }}."
+        success_msg: "Dev-C++ 5.11 is successfully installed."
