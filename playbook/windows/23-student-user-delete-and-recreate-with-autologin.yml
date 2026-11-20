@@ -1,0 +1,85 @@
+---
+- name: Delete, recreate, and auto-login passwordless Windows 11 student user
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+
+  vars:
+    target_user: "student"
+    student_fullname: "Student"
+    student_groups:
+      - "Users"
+
+  tasks:
+    - name: Force log off active student session if logged in
+      ansible.windows.win_powershell:
+        script: |
+          $sessions = query user 2>$null
+          foreach ($line in $sessions) {
+              if ($line -match "^\s*>?{{ target_user }}\s+(\S+\s+)?(\d+)\s+") {
+                  $sessionId = $Matches
+                  logoff $sessionId
+                  $Ansible.Changed = $true
+              }
+          }
+      ignore_errors: true
+
+    - name: Remove student user profile from Windows (Registry + C:\Users\student)
+      ansible.windows.win_powershell:
+        script: |
+          $profile = Get-CimInstance -ClassName Win32_UserProfile -Filter "LocalPath = 'C:\\Users\\{{ target_user }}'" -ErrorAction SilentlyContinue
+          if ($profile) {
+              Remove-CimInstance -InputObject $profile
+              $Ansible.Changed = $true
+              Write-Output "Removed WMI user profile and directory for {{ target_user }}."
+          } else {
+              $Ansible.Changed = $false
+              Write-Output "No registered WMI profile found for {{ target_user }}."
+          }
+
+    - name: Ensure any leftover C:\Users\student folder is completely removed
+      ansible.windows.win_file:
+        path: "C:\\Users\\{{ target_user }}"
+        state: absent
+
+    - name: Delete the local student user account
+      ansible.windows.win_user:
+        name: "{{ target_user }}"
+        state: absent
+
+    - name: Recreate local student user without password and restrict password changes
+      ansible.windows.win_user:
+        name: "{{ target_user }}"
+        fullname: "{{ student_fullname }}"
+        account_disabled: false
+        password_never_expires: true
+        user_cannot_change_password: true
+        groups: "{{ student_groups }}"
+        groups_action: replace
+        state: present
+
+    - name: Skip Windows 11 first-login privacy setup prompts for new profile
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE
+        name: DisablePrivacyExperience
+        data: 1
+        type: dword
+
+    - name: Configure Windows 11 AutoAdminLogon for student user
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        name: "{{ item.name }}"
+        data: "{{ item.data }}"
+        type: string
+      loop:
+        - { name: "AutoAdminLogon", data: "1" }
+        - { name: "DefaultUserName", data: "{{ target_user }}" }
+        - { name: "DefaultPassword", data: "" }
+        - { name: "DefaultDomainName", data: "." }
+
+    - name: Remove AutoLogonCount if present so auto-login never expires
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        name: AutoLogonCount
+        state: absent
+
+    
