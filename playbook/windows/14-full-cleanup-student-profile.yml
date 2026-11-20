@@ -1,0 +1,120 @@
+---
+- name: Clean Windows 11 student user profile safely
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: false
+
+  vars:
+    target_user: "student"
+    profile_path: "C:\\Users\\{{ target_user }}"
+    
+    # Folders to keep (case-insensitive matching is handled in PowerShell)
+    keep_folders:
+      - "AppData"
+      - "Desktop"
+      - "Downloads"
+      - "Documents"
+      - "Pictures"
+      - "Videos"
+      - "Music"
+      - "VirtualBox VMs"      
+      - ".VirtualBox"
+      # Standard Windows hidden NTFS junctions required for legacy compatibility
+      - "Application Data"
+      - "Cookies"
+      - "Local Settings"
+      - "My Documents"
+      - "NetHood"
+      - "PrintHood"
+      - "Recent"
+      - "SendTo"
+      - "Start Menu"
+      - "Templates"
+
+    # Exact filenames to keep
+    keep_files:
+      - "NTUSER.DAT"
+      - "ntuser.dat.LOG1"
+      - "ntuser.dat.LOG2"
+      - "ntuser.ini"
+      - "desktop.ini"
+
+  tasks:
+    - name: Verify the target user profile directory exists
+      ansible.windows.win_stat:
+        path: "C:\\Users\\{{ target_user }}"
+      register: profile_dir
+
+    - name: Abort if profile directory does not exist
+      ansible.builtin.fail:
+        msg: "Profile path {{ profile_path }} was not found on {{ inventory_hostname }}."
+      when: not profile_dir.stat.exists
+
+    - name: Check if the target user is currently logged in
+      ansible.windows.win_powershell:
+        script: |
+          $sessions = query user 2>$null
+          if ($sessions -match "\b{{ target_user }}\b") {
+              Write-Output "LOGGED_IN"
+          } else {
+              Write-Output "LOGGED_OUT"
+          }
+      register: user_session
+      changed_when: false
+
+    - name: Fail if target user is logged in (prevents locked file errors)
+      ansible.builtin.fail:
+        msg: "User '{{ target_user }}' is currently logged in. Log the user off before cleaning their profile."
+      when: "'LOGGED_IN' in user_session.output"
+
+    - name: Remove unapproved files and folders from user root directory
+      ansible.windows.win_powershell:
+        script: |
+          param(
+              [string]$ProfilePath,
+              [string[]]$KeepFolders,
+              [string[]]$KeepFiles
+          )
+
+          $ErrorActionPreference = "Stop"
+          $deletedItems = @()
+
+          # Retrieve all top-level items including hidden and system items
+          $items = Get-ChildItem -Path $ProfilePath -Force
+
+          foreach ($item in $items) {
+              # Always preserve ReparsePoints (Junctions/Symlinks) to avoid breaking Windows profile links
+              if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                  continue
+              }
+
+              if ($item.PSIsContainer) {
+                  if ($KeepFolders -notcontains $item.Name) {
+                      Remove-Item -LiteralPath $item.FullName -Recurse -Force
+                      $deletedItems += $item.FullName
+                  }
+              } else {
+                  # Preserve exact matches and NTUSER registry transaction log files
+                  if (($KeepFiles -notcontains $item.Name) -and ($item.Name -notlike "NTUSER.DAT*")) {
+                      Remove-Item -LiteralPath $item.FullName -Force
+                      $deletedItems += $item.FullName
+                  }
+              }
+          }
+
+          if ($deletedItems.Count -gt 0) {
+              $Ansible.Changed = $true
+              Write-Output "Deleted $($deletedItems.Count) item(s):"
+              $deletedItems | ForEach-Object { Write-Output " - $_" }
+          } else {
+              $Ansible.Changed = $false
+              Write-Output "Profile is already clean."
+          }
+        parameters:
+          ProfilePath: "{{ profile_path }}"
+          KeepFolders: "{{ keep_folders }}"
+          KeepFiles: "{{ keep_files }}"
+      register: cleanup_result
+
+    - name: Display cleanup summary
+      ansible.builtin.debug:
+        var: cleanup_result.output
